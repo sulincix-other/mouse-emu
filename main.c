@@ -78,6 +78,8 @@ int main(int argc, char** argv) {
     libevdev_enable_event_code(dev, EV_KEY, BTN_LEFT, NULL);
     libevdev_enable_event_code(dev, EV_KEY, BTN_MIDDLE, NULL);
     libevdev_enable_event_code(dev, EV_KEY, BTN_RIGHT, NULL);
+    libevdev_enable_event_code(dev, EV_KEY, BTN_EXTRA, NULL);
+    libevdev_enable_event_code(dev, EV_KEY, BTN_SIDE, NULL);
 
     // Initialize uinput device
     struct libevdev_uinput *uidev;
@@ -107,7 +109,7 @@ int main(int argc, char** argv) {
             if (ev.code == KEY_RIGHTCTRL) {
                 mouse = (ev.value > 0);
             }
-            if (ev.code == KEY_LEFTSHIFT){
+            if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT){
                shift = (ev.value > 0);
             }
             if(mouse){
@@ -135,7 +137,15 @@ int main(int argc, char** argv) {
                     libevdev_uinput_write_event(uidev, EV_REL, REL_WHEEL_HI_RES, 50);
                     libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
                 }
-                if (ev.code == KEY_LEFTCTRL || ev.code == KEY_LEFTALT || ev.code == KEY_LEFTSHIFT ||  ev.code == KEY_LEFTMETA){
+                if (ev.code == KEY_HOME){
+                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_EXTRA, ev.value);
+                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                }
+                if (ev.code == KEY_END){
+                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_SIDE, ev.value);
+                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                }
+                if (ev.code == KEY_LEFTCTRL || ev.code == KEY_LEFTALT || ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT ||  ev.code == KEY_LEFTMETA){
                    libevdev_uinput_write_event(uidev, EV_KEY, ev.code, ev.value);
                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
                 }

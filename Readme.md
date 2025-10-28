@@ -12,6 +12,8 @@ If your mouse is a potato or you just don’t have one, this project lets you em
 * R: Middle-click.
 * PageUp: scroll up.
 * PageDown: scroll down.
+* Home: next page.
+* End: previous page.
 * Right Ctrl: Activate mouse emulation (the potato key!).
 * Shift: Slow things down by 5x.
 
