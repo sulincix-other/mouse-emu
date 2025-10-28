@@ -72,9 +72,11 @@ int main(int argc, char** argv) {
     libevdev_enable_event_type(dev, EV_REL);
     libevdev_enable_event_code(dev, EV_REL, REL_X, NULL);
     libevdev_enable_event_code(dev, EV_REL, REL_Y, NULL);
+    libevdev_enable_event_code(dev, EV_REL, REL_WHEEL_HI_RES, NULL);
 
     libevdev_enable_event_type(dev, EV_KEY);
     libevdev_enable_event_code(dev, EV_KEY, BTN_LEFT, NULL);
+    libevdev_enable_event_code(dev, EV_KEY, BTN_MIDDLE, NULL);
     libevdev_enable_event_code(dev, EV_KEY, BTN_RIGHT, NULL);
 
     // Initialize uinput device
@@ -119,6 +121,18 @@ int main(int argc, char** argv) {
                 }
                 if (ev.code == KEY_E){
                     libevdev_uinput_write_event(uidev, EV_KEY, BTN_RIGHT, ev.value);
+                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                }
+                if (ev.code == KEY_R){
+                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_MIDDLE, ev.value);
+                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                }
+                if (ev.code == KEY_PAGEDOWN){
+                    libevdev_uinput_write_event(uidev, EV_REL, REL_WHEEL_HI_RES, -50);
+                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                }
+                if (ev.code == KEY_PAGEUP){
+                    libevdev_uinput_write_event(uidev, EV_REL, REL_WHEEL_HI_RES, 50);
                     libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
                 }
                 if (ev.code == KEY_LEFTCTRL || ev.code == KEY_LEFTALT || ev.code == KEY_LEFTSHIFT ||  ev.code == KEY_LEFTMETA){
