@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     struct libevdev *dev = NULL;
     struct input_event ev;
 
-    char* dev_path = calloc(1024, sizeof(char));
+    char dev_path[PATH_MAX];
     if (argc < 2) {
         list_devices();
         return 0;
