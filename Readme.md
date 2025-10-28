@@ -19,7 +19,7 @@ make install
 ```
 
 ## Usage
-First, list devices—run:
+First, list devices:
 ```bash
 /usr/libexec/mouse-emu
 ```
@@ -28,10 +28,10 @@ Example output:
 ```
 Searching:
 /dev/input/event21 => 2.4G Composite Device
-/dev/input/event3 => SEMICO USB Gaming Keyboard 
+/dev/input/event3 => SEMICO USB Gaming Keyboard
 ```
 
-Then, use your device—run:
+Then, use your device:
 ```bash
 /usr/libexec/mouse-emu /dev/input/event3
 ```
