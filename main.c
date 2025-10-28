@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 
     do {
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
-        printf("%d %d %d\n", ev.type, ev.code, ev.value);
+        //printf("%d %d %d\n", ev.type, ev.code, ev.value);
         if (rc == 0 && ev.type == EV_KEY) {
             if (ev.code == KEY_RIGHTCTRL) {
                 mouse = (ev.value > 0);
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
                 }
                 if(ev.code == KEY_W || ev.code == KEY_A || ev.code == KEY_S || ev.code == KEY_D){
-                    if(shift){
+                    if(!shift){
                         y = y*5;
                         x = x*5;
                     }

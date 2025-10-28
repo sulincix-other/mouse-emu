@@ -1,4 +1,4 @@
-# Mouse Emulator
+w# Mouse Emulator
 If your mouse is a potato or you just don’t have one, this project lets you emulate a mouse using your keyboard!
 
 ## Requirements
@@ -10,7 +10,7 @@ If your mouse is a potato or you just don’t have one, this project lets you em
 * Q: Left-click.
 * E: Right-click.
 * Right Ctrl: Activate mouse emulation (the potato key!).
-* Shift: Speed things up by 5x.
+* Shift: Slow things down by 5x.
 
 ## Building
 ```
