@@ -119,17 +119,20 @@ static void process_event(struct input_event e){
             ev.code = BTN_RIGHT;
         }else if(e.code == KEY_R){
             ev.code = BTN_MIDDLE;
-        }else if(e.code == KEY_PAGEDOWN){
-            ev.code = REL_WHEEL_HI_RES;
-            ev.value = -50;
-        }else if(e.code == KEY_PAGEUP){
-            ev.code = REL_WHEEL_HI_RES;
-            ev.value = 50;
         }else if(e.code == KEY_HOME){
             ev.code = BTN_EXTRA;
         }else if(e.code == KEY_END){
             ev.code = BTN_SIDE;
         }
+    }
+    if(e.code == KEY_PAGEDOWN){
+        ev.type = EV_REL;
+        ev.code = REL_WHEEL_HI_RES;
+        ev.value = -50;
+    }else if(e.code == KEY_PAGEUP){
+        ev.type = EV_REL;
+        ev.code = REL_WHEEL_HI_RES;
+        ev.value = 50;
     }
 }
 
