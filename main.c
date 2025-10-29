@@ -141,11 +141,11 @@ static void process_event(struct input_event e){
     if(e.code == KEY_PAGEDOWN){
         ev.type = EV_REL;
         ev.code = REL_WHEEL_HI_RES;
-        ev.value = -50;
+        ev.value = -120*(e.value > 0);
     }else if(e.code == KEY_PAGEUP){
         ev.type = EV_REL;
         ev.code = REL_WHEEL_HI_RES;
-        ev.value = 50;
+        ev.value = 120*(e.value > 0);
     }
 }
 
