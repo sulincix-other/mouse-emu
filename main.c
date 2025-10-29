@@ -47,6 +47,7 @@ typedef struct {
     int code;
     int value;
     bool shift;
+    bool mouse;
 } Event;
 
 static Event ev;
@@ -66,8 +67,14 @@ static void do_event(int type, int code, int value){
     usleep(50);
 }
 
-
+static bool loop_enabled = false;
 static void* loop(void* arg) {
+    pthread_mutex_lock(&lock);
+    if(loop_enabled){
+        return NULL;
+    }
+    loop_enabled = true;
+    pthread_mutex_unlock(&lock);
     (void) arg;
     while(1){
         int slow = 1;
@@ -75,6 +82,12 @@ static void* loop(void* arg) {
             slow = 5;
         }
         usleep(1331*slow);
+        if(!ev.mouse){
+            pthread_mutex_lock(&lock);
+            loop_enabled = false;
+            pthread_mutex_unlock(&lock);
+            break;
+        }
         if(ev.x != 0 || ev.y != 0){
             if(ev.x != 0){
                 do_event_fn( EV_REL, REL_X, ev.x);
@@ -192,23 +205,23 @@ int main(int argc, char** argv) {
 
     ioctl(libevdev_get_fd(dev), EVIOCGRAB, 1);
 
-    pthread_t thread;
-    pthread_create(&thread, NULL, loop, 0);
-
-    // define mouse status
-    bool mouse = false;
 
     do {
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         //printf("%d %d %d\n", ev.type, ev.code, ev.value);
         if (rc == 0 && e.type == EV_KEY) {
             if (e.code == KEY_RIGHTCTRL) {
-                mouse = (e.value > 0);
+                bool m = ev.mouse;
+                ev.mouse = (e.value > 0);
+                if(ev.mouse && !m){
+                    pthread_t thread;
+                    pthread_create(&thread, NULL, loop, 0);
+                }
             }
             if (e.code == KEY_LEFTSHIFT || e.code == KEY_RIGHTSHIFT){
                ev.shift = (e.value > 0);
             }
-            if(mouse){
+            if(ev.mouse){
                 process_event(e);
                 if (e.code == KEY_LEFTCTRL || e.code == KEY_LEFTALT || e.code == KEY_LEFTSHIFT ||  e.code == KEY_LEFTMETA){
                    do_event(EV_KEY, e.code, e.value);
