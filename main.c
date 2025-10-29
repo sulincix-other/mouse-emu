@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <pthread.h>
 #include <linux/input.h>
 #include <libevdev/libevdev.h>
 #include <libevdev/libevdev-uinput.h>
@@ -39,9 +40,103 @@ void list_devices() {
         closedir(dir);
     }
 }
+typedef struct {
+    int x;
+    int y;
+    int type;
+    int code;
+    int value;
+    bool shift;
+} Event;
+
+static Event ev;
+pthread_mutex_t lock;
+static struct libevdev_uinput *uidev;
+
+static void do_event_fn(int type, int code, int value){
+    pthread_mutex_lock(&lock);
+    libevdev_uinput_write_event(uidev, type, code, value);
+    pthread_mutex_unlock(&lock);
+}
+
+static void do_event(int type, int code, int value){
+    //printf("%d %d %d\n", type, code, value);
+    do_event_fn(type, code, value);
+    do_event_fn(EV_SYN, SYN_REPORT, 0);
+    usleep(50);
+}
+
+
+static void* loop(void* arg) {
+    (void) arg;
+    while(1){
+        int slow = 1;
+        if(ev.shift){
+            slow = 5;
+        }
+        usleep(1331*slow);
+        if(ev.x != 0 || ev.y != 0){
+            if(ev.x != 0){
+                do_event_fn( EV_REL, REL_X, ev.x);
+            }
+            if(ev.y != 0){
+                do_event_fn(EV_REL, REL_Y, ev.y);
+            }
+            do_event_fn(EV_SYN, SYN_REPORT, 0);
+        }
+        if(ev.code != 0){
+            do_event(ev.type, ev.code, ev.value);
+            ev.code = 0;
+        }
+    }
+    return NULL;
+}
+
+
+
+static void process_event(struct input_event e){
+    // X axis
+    if (e.code == KEY_A){
+        ev.x = -1 * e.value;
+    } else if(e.code == KEY_D){
+        ev.x = e.value;
+    } else if (e.code == KEY_W){
+        ev.y = -1 * e.value;
+    } else if(e.code == KEY_S){
+        ev.y = e.value;
+    } else {
+        ev.x = 0;
+        ev.y = 0;
+    }
+    // Clicks
+    ev.code = 0;
+    if(e.value == 1 || e.value == 0){
+        ev.value = e.value;
+        ev.type = EV_KEY;
+        if(e.code == KEY_Q){
+            ev.code = BTN_LEFT;
+        }else if(e.code == KEY_E){
+            ev.code = BTN_RIGHT;
+        }else if(e.code == KEY_R){
+            ev.code = BTN_MIDDLE;
+        }else if(e.code == KEY_PAGEDOWN){
+            ev.code = REL_WHEEL_HI_RES;
+            ev.value = -50;
+        }else if(e.code == KEY_PAGEUP){
+            ev.code = REL_WHEEL_HI_RES;
+            ev.value = 50;
+        }else if(e.code == KEY_HOME){
+            ev.code = BTN_EXTRA;
+        }else if(e.code == KEY_END){
+            ev.code = BTN_SIDE;
+        }
+    }
+}
+
+
 int main(int argc, char** argv) {
     struct libevdev *dev = NULL;
-    struct input_event ev;
+    struct input_event e;
 
     char dev_path[PATH_MAX];
     if (argc < 2) {
@@ -82,7 +177,6 @@ int main(int argc, char** argv) {
     libevdev_enable_event_code(dev, EV_KEY, BTN_SIDE, NULL);
 
     // Initialize uinput device
-    struct libevdev_uinput *uidev;
     int err = libevdev_uinput_create_from_device(dev, LIBEVDEV_UINPUT_OPEN_MANAGED, &uidev);
     if (err < 0) {
         fprintf(stderr, "Failed to create uinput device: %s\n", strerror(-err));
@@ -95,76 +189,34 @@ int main(int argc, char** argv) {
 
     ioctl(libevdev_get_fd(dev), EVIOCGRAB, 1);
 
+    pthread_t thread;
+    pthread_create(&thread, NULL, loop, 0);
+
     // define mouse status
     bool mouse = false;
-    bool shift = false;
-
-    int x = 0;
-    int y = 0;
 
     do {
-        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         //printf("%d %d %d\n", ev.type, ev.code, ev.value);
-        if (rc == 0 && ev.type == EV_KEY) {
-            if (ev.code == KEY_RIGHTCTRL) {
-                mouse = (ev.value > 0);
+        if (rc == 0 && e.type == EV_KEY) {
+            if (e.code == KEY_RIGHTCTRL) {
+                mouse = (e.value > 0);
             }
-            if (ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT){
-               shift = (ev.value > 0);
+            if (e.code == KEY_LEFTSHIFT || e.code == KEY_RIGHTSHIFT){
+               ev.shift = (e.value > 0);
             }
             if(mouse){
-                if (ev.code == KEY_W){ y = -1*ev.value; }
-                if (ev.code == KEY_A){ x = -1*ev.value; }
-                if (ev.code == KEY_S){ y = 1*ev.value; }
-                if (ev.code == KEY_D){ x = 1*ev.value; }
-                if (ev.code == KEY_Q){
-                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_LEFT, ev.value);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_E){
-                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_RIGHT, ev.value);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_R){
-                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_MIDDLE, ev.value);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_PAGEDOWN){
-                    libevdev_uinput_write_event(uidev, EV_REL, REL_WHEEL_HI_RES, -50);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_PAGEUP){
-                    libevdev_uinput_write_event(uidev, EV_REL, REL_WHEEL_HI_RES, 50);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_HOME){
-                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_EXTRA, ev.value);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_END){
-                    libevdev_uinput_write_event(uidev, EV_KEY, BTN_SIDE, ev.value);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if (ev.code == KEY_LEFTCTRL || ev.code == KEY_LEFTALT || ev.code == KEY_LEFTSHIFT || ev.code == KEY_RIGHTSHIFT ||  ev.code == KEY_LEFTMETA){
-                   libevdev_uinput_write_event(uidev, EV_KEY, ev.code, ev.value);
-                   libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
-                }
-                if(ev.code == KEY_W || ev.code == KEY_A || ev.code == KEY_S || ev.code == KEY_D){
-                    if(!shift){
-                        y = y*5;
-                        x = x*5;
-                    }
-                    libevdev_uinput_write_event(uidev, EV_REL, REL_X, x*10);
-                    libevdev_uinput_write_event(uidev, EV_REL, REL_Y, y*10);
-                    libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                process_event(e);
+                if (e.code == KEY_LEFTCTRL || e.code == KEY_LEFTALT || e.code == KEY_LEFTSHIFT ||  e.code == KEY_LEFTMETA){
+                   do_event(EV_KEY, e.code, e.value);
                 }
             } else {
-                libevdev_uinput_write_event(uidev, ev.type, ev.code, ev.value);
-                libevdev_uinput_write_event(uidev, EV_SYN, SYN_REPORT, 0);
+                   do_event(EV_KEY, e.code, e.value);
             }
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
+    pthread_mutex_destroy(&lock);
     libevdev_free(dev);
     close(fd);
 
