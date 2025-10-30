@@ -1,7 +1,7 @@
 CFLAGS:=-Wall -Wextra -Werror
 PREFIX:=/usr
 build:
-	$(CC) $(CFLAGS) main.c -o main
+	$(CC) $(CFLAGS) -fno-plt main.c -o main
 
 install:
 	install -Dm644 $(DESTDIR)/$(PREFIX)/libexec/

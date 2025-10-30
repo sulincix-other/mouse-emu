@@ -14,16 +14,7 @@
 #define PATH_MAX 1024
 #endif
 
-#ifndef BITS_PER_LONG
-#define BITS_PER_LONG (sizeof(unsigned long) * 8)
-#endif
-
-#define test_bit(nr, addr) \
-    (((const unsigned long *)(addr))[(nr) / BITS_PER_LONG] & \
-     (1UL << ((nr) % BITS_PER_LONG)))
-
-
-void list_devices() {
+static void list_devices() {
     DIR *dir;
     struct dirent *ent;
     char path[1024];
@@ -220,7 +211,7 @@ int main(int argc, char** argv) {
         close(fd);
         exit(1);
     }
-    
+
     if (ioctl(uinput_fd, UI_DEV_CREATE) < 0) {
         perror("Failed to create uinput device");
         close(uinput_fd);
