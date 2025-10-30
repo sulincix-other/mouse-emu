@@ -11,6 +11,10 @@
 #include <stdbool.h>
 #include <dirent.h>
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
 void list_devices() {
     DIR *dir;
     struct dirent *ent;
@@ -188,6 +192,7 @@ int main(int argc, char** argv) {
     libevdev_enable_event_code(dev, EV_REL, REL_Y, NULL);
     libevdev_enable_event_code(dev, EV_REL, REL_WHEEL_HI_RES, NULL);
 
+
     libevdev_enable_event_type(dev, EV_KEY);
     libevdev_enable_event_code(dev, EV_KEY, BTN_LEFT, NULL);
     libevdev_enable_event_code(dev, EV_KEY, BTN_MIDDLE, NULL);
@@ -203,8 +208,8 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-	// sleep 300ms
-    usleep(300);
+    // sleep 300ms
+    usleep(300000);
 
     ioctl(libevdev_get_fd(dev), EVIOCGRAB, 1);
 
@@ -213,7 +218,6 @@ int main(int argc, char** argv) {
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         //printf("%d %d %d\n", ev.type, ev.code, ev.value);
         if (rc == 0 && e.type == EV_KEY) {
-            buttons_status[e.code] = e.value;
             if (e.code == KEY_RIGHTCTRL) {
                 for(size_t i=0; i<512;i++){
                     if(buttons_status[i]){
@@ -237,6 +241,7 @@ int main(int argc, char** argv) {
                    do_event(EV_KEY, e.code, e.value);
                 }
             } else {
+                   buttons_status[e.code] = e.value;
                    do_event(EV_KEY, e.code, e.value);
             }
         }
