@@ -39,17 +39,10 @@ void list_devices() {
                 // Get device name
                 char name[256];
                 if (ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0) {
-                    perror("Failed to get device name");
+                    sprintf(name, "Unknown Device");
                     close(fd);
-                    break;
+                    continue;
                 }
-                 // Get device capabilities
-               unsigned int ev_bit[EV_MAX / (8 * sizeof(__u32))];
-               if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bit)), ev_bit) < 0) {
-                   perror("Failed to get event bits");
-                   close(fd);
-                   break;
-               }
 
                 printf("%s: %s \n", path, name);
                 close(fd);
