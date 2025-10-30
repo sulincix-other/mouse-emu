@@ -1,7 +1,7 @@
 CFLAGS:=-Wall -Wextra -Werror
 PREFIX:=/usr
 build:
-	$(CC) $(CFLAGS) main.c -o main `pkg-config --cflags --libs libevdev`
+	$(CC) $(CFLAGS) main.c -o main
 
 install:
 	install -Dm644 $(DESTDIR)/$(PREFIX)/libexec/
