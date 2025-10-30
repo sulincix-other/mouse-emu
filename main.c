@@ -117,9 +117,6 @@ static void process_event(struct input_event e){
         ev.y = -1 * e.value;
     } else if(e.code == KEY_S){
         ev.y = e.value;
-    } else {
-        ev.x = 0;
-        ev.y = 0;
     }
     // Clicks
     ev.code = 0;
@@ -150,9 +147,15 @@ static void process_event(struct input_event e){
 }
 
 
+static int buttons_status[512];
+
 int main(int argc, char** argv) {
     struct libevdev *dev = NULL;
     struct input_event e;
+    // reset all status
+    for(size_t i=0; i<512;i++){
+        buttons_status[i] = 0;
+    }
 
     char dev_path[PATH_MAX];
     if (argc < 2) {
@@ -210,7 +213,14 @@ int main(int argc, char** argv) {
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &e);
         //printf("%d %d %d\n", ev.type, ev.code, ev.value);
         if (rc == 0 && e.type == EV_KEY) {
+            buttons_status[e.code] = e.value;
             if (e.code == KEY_RIGHTCTRL) {
+                for(size_t i=0; i<512;i++){
+                    if(buttons_status[i]){
+                        do_event(EV_KEY, i, 0);
+                        buttons_status[e.code] = 0;
+                    }
+                }
                 bool m = ev.mouse;
                 ev.mouse = (e.value > 0);
                 if(ev.mouse && !m){
