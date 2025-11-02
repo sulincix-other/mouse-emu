@@ -18,6 +18,10 @@
 #define KEY_POTATO KEY_RIGHTCTRL
 #endif
 
+#ifndef TOGGLE
+#define TOGGLE false
+#endif
+
 static void list_devices() {
     DIR *dir;
     struct dirent *ent;
@@ -229,6 +233,10 @@ int main(int argc, char** argv) {
     // Grab the original device
     ioctl(fd, EVIOCGRAB, 1);
 
+    // initial event status
+    ev.mouse = false;
+    ev.shift = false;
+
     do {
         int rc = read(fd, &e, sizeof(e));
         if (rc < (int)sizeof(e)) {
@@ -246,11 +254,24 @@ int main(int argc, char** argv) {
                     }
                 }
                 ev.shift = false;
-                bool m = ev.mouse;
-                ev.mouse = (e.value > 0);
-                if (ev.mouse && !m) {
-                    pthread_t thread;
-                    pthread_create(&thread, NULL, loop, NULL);
+                #ifdef DEBUG
+                printf("toggle: %d %d\n", e.value, ev.mouse);
+                #endif
+                if(TOGGLE){
+                    if(e.value == 1){
+                        ev.mouse = !ev.mouse;
+                        if(ev.mouse){
+                            pthread_t thread;
+                            pthread_create(&thread, NULL, loop, NULL);
+                        }
+                    }
+                } else {
+                    bool m = ev.mouse;
+                    ev.mouse = (e.value > 0);
+                    if (ev.mouse && !m) {
+                        pthread_t thread;
+                        pthread_create(&thread, NULL, loop, NULL);
+                    }
                 }
             }
             if (e.code == KEY_LEFTSHIFT || e.code == KEY_RIGHTSHIFT) {
