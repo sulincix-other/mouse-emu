@@ -232,7 +232,8 @@ int main(int argc, char** argv) {
     do {
         int rc = read(fd, &e, sizeof(e));
         if (rc < (int)sizeof(e)) {
-            continue;
+            fprintf(stderr, "Failed to read event!\n");
+            break;
         }
 
         // Process the event
