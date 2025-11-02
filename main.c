@@ -14,6 +14,10 @@
 #define PATH_MAX 1024
 #endif
 
+#ifndef KEY_POTATO
+#define KEY_POTATO KEY_RIGHTCTRL
+#endif
+
 static void list_devices() {
     DIR *dir;
     struct dirent *ent;
@@ -233,7 +237,7 @@ int main(int argc, char** argv) {
 
         // Process the event
         if (e.type == EV_KEY) {
-            if (e.code == KEY_RIGHTCTRL) {
+            if (e.code == KEY_POTATO) {
                 for (size_t i = 0; i < 512; i++) {
                     if (buttons_status[i]) {
                         do_event(EV_KEY, i, 0);
