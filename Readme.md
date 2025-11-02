@@ -23,6 +23,17 @@ make
 make install
 ```
 
+### Notes
+Changing Potato Key: To set the potato key to KEY_F23 (Copilot key), use the command:
+```
+make CFLAGS="-DKEY_POTATO=KEY_F23"
+```
+
+Enabling Toggle Mode: To activate toggle mode, run the following command: 
+```
+make CFLAGS="-DTOGGLE=true"
+```
+
 ## Usage
 First, list devices:
 ```bash
