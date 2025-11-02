@@ -244,6 +244,7 @@ int main(int argc, char** argv) {
                         buttons_status[i] = 0;
                     }
                 }
+                ev.shift = false;
                 bool m = ev.mouse;
                 ev.mouse = (e.value > 0);
                 if (ev.mouse && !m) {
